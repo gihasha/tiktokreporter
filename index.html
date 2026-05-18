@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TikTok Account Reporter</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Matrix Rain Canvas -->
+    <canvas id="matrixCanvas"></canvas>
+
+    <!-- Main Container -->
+    <div class="main-container">
+        <!-- Header -->
+        <div class="header">
+            <h1 class="glitch" data-text="TikTok Account Reporter">TikTok Account Reporter</h1>
+            <p class="subtitle">[ SYSTEM ACCESS GRANTED ]</p>
+            <div class="line-divider"></div>
+        </div>
+
+        <!-- Input Section -->
+        <div class="input-section">
+            <label class="input-label">
+                <span class="prompt">root@system:~#</span> Enter Username
+            </label>
+            <div class="input-wrapper">
+                <span class="at-symbol">@</span>
+                <input 
+                    type="text" 
+                    id="usernameInput" 
+                    class="username-input" 
+                    placeholder="tiktok_username"
+                    autocomplete="off"
+                >
+                <button class="scan-btn" id="scanBtn">
+                    <span class="btn-text">SCAN</span>
+                    <span class="btn-icon">→</span>
+                </button>
+            </div>
+            <div class="loading-bar" id="loadingBar"></div>
+        </div>
+
+        <!-- Profile Card -->
+        <div class="profile-card" id="profileCard">
+            <div class="profile-header">
+                <div class="avatar" id="avatarContainer">
+                    <img id="avatarImg" src="" alt="Profile" class="avatar-img">
+                    <div class="online-dot"></div>
+                </div>
+                <div class="profile-info">
+                    <h2 id="displayName">---</h2>
+                    <p class="username-display">@<span id="usernameDisplay">---</span></p>
+                    <p class="user-id">ID: <span id="userId">---</span></p>
+                </div>
+            </div>
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <span class="stat-number" id="followers">0</span>
+                    <span class="stat-label">Followers</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-number" id="following">0</span>
+                    <span class="stat-label">Following</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-number" id="likes">0</span>
+                    <span class="stat-label">Likes</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-number" id="videos">0</span>
+                    <span class="stat-label">Videos</span>
+                </div>
+            </div>
+            <div class="bio-section">
+                <p id="bio">No bio available</p>
+            </div>
+            <div class="verified-badge" id="verifiedBadge">
+                ✓ Verified Account
+            </div>
+        </div>
+
+        <!-- Report Button -->
+        <button class="report-btn" id="reportBtn" disabled>
+            <span class="report-text">REPORT PROFILE</span>
+            <span class="report-icon">⚠</span>
+        </button>
+
+        <!-- Status Display -->
+        <div class="status-display" id="statusDisplay">
+            <span class="status-icon" id="statusIcon">⏳</span>
+            <span class="status-text" id="statusText">Waiting for input...</span>
+        </div>
+    </div>
+
+    <!-- Terminal Footer -->
+    <div class="terminal-footer">
+        <span class="cursor-blink">▌</span> System Ready | TikTok Reporter v2.0 | Encrypted Connection
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
