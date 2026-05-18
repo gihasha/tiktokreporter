@@ -141,3 +141,68 @@ def fetch_tiktok_profile(username):
                             'verified': user_info.get('verified', False),
                         }
             except (json.JSONDecodeError, KeyError, TypeError):
+                continue
+        
+        # Method 3: Try to extract from seo meta tags
+        title_tag = soup.find('title')
+        if title_tag:
+            title = title_tag.text
+            if 'not found' in title.lower() or 'page not found' in title.lower():
+                return {'success': False, 'error': f'Profile "@{username}" not found on TikTok'}
+        
+        # If we got here, we couldn't parse the data
+        return {
+            'success': False, 
+            'error': f'Could not fetch profile data for @{username}. TikTok may have changed their page structure.'
+        }
+        
+    except requests.RequestException as e:
+        return {'success': False, 'error': f'Network error: {str(e)}'}
+    except Exception as e:
+        return {'success': False, 'error': f'Unexpected error: {str(e)}'}
+
+
+@app.route('/api/tiktok-profile')
+def get_tiktok_profile():
+    """API endpoint to get TikTok profile data"""
+    username = request.args.get('username', '').replace('@', '').strip()
+    
+    if not username:
+        return jsonify({'success': False, 'error': 'Username parameter is required'})
+    
+    # Validate username format (TikTok usernames: letters, numbers, underscore, period)
+    if not re.match(r'^[a-zA-Z0-9._]+$', username):
+        return jsonify({'success': False, 'error': 'Invalid username format'})
+    
+    # Rate limiting protection (basic)
+    if len(username) > 30:
+        return jsonify({'success': False, 'error': 'Username too long'})
+    
+    # Fetch profile data
+    result = fetch_tiktok_profile(username)
+    return jsonify(result)
+
+
+@app.route('/')
+def index():
+    """Health check endpoint"""
+    return jsonify({
+        'status': 'running',
+        'service': 'TikTok Profile Fetcher API',
+        'version': '2.0',
+        'endpoints': {
+            '/api/tiktok-profile?username=USERNAME': 'Get TikTok profile data'
+        }
+    })
+
+
+if __name__ == '__main__':
+    print("=" * 50)
+    print("🔧 TikTok Profile Fetcher Backend")
+    print("=" * 50)
+    print(f"📡 Server starting at: http://localhost:5000")
+    print(f"🔗 API endpoint: http://localhost:5000/api/tiktok-profile?username=example")
+    print(f"💡 Press Ctrl+C to stop the server")
+    print("=" * 50)
+    
+    app.run(debug=True, host='0.0.0.0', port=5000)
