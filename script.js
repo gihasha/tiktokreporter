@@ -50,178 +50,208 @@ document.addEventListener('DOMContentLoaded', () => {
     const statusIcon = document.getElementById('statusIcon');
     const statusText = document.getElementById('statusText');
     const loadingBar = document.getElementById('loadingBar');
+    const errorMessage = document.getElementById('errorMessage');
+    const verifiedBadge = document.getElementById('verifiedBadge');
 
-    // Demo data for simulation
-    const demoTargets = {
-        'charlidamelio': {
-            displayName: 'Charli D\'Amelio',
-            username: 'charlidamelio',
-            userId: '5831967',
-            avatar: 'https://i.pravatar.cc/150?img=1',
-            followers: '151M',
-            following: '1,234',
-            likes: '11.2B',
-            videos: '2,847',
-            bio: 'dancer | actress | she/her 💕',
-            verified: true
-        },
-        'khaby.lame': {
-            displayName: 'Khabane Lame',
-            username: 'khaby.lame',
-            userId: '1284563',
-            avatar: 'https://i.pravatar.cc/150?img=2',
-            followers: '162M',
-            following: '567',
-            likes: '2.5B',
-            videos: '1,892',
-            bio: 'Simplicity is the key 🗝️',
-            verified: true
-        },
-        'addisonre': {
-            displayName: 'Addison Rae',
-            username: 'addisonre',
-            userId: '7456291',
-            avatar: 'https://i.pravatar.cc/150?img=3',
-            followers: '88M',
-            following: '345',
-            likes: '5.8B',
-            videos: '1,567',
-            bio: 'Gods plan 🙏',
-            verified: true
-        }
-    };
+    // Backend server URL (change this if needed)
+    const BACKEND_URL = 'http://localhost:5000';
+    
+    // Track current username
+    let currentUsername = '';
 
-    // Default demo data
-    const getDefaultData = (username) => ({
-        displayName: username.charAt(0).toUpperCase() + username.slice(1),
-        username: username,
-        userId: Math.floor(Math.random() * 9999999).toString(),
-        avatar: `https://i.pravatar.cc/150?u=${username}`,
-        followers: (Math.floor(Math.random() * 1000) + 1).toLocaleString(),
-        following: Math.floor(Math.random() * 500).toString(),
-        likes: (Math.floor(Math.random() * 50000)).toLocaleString(),
-        videos: Math.floor(Math.random() * 200).toString(),
-        bio: 'TikTok Creator | Content Maker 🎵',
-        verified: Math.random() > 0.7
-    });
-
-    // Scan button click
-    scanBtn.addEventListener('click', () => {
+    // ===== SCAN BUTTON CLICK =====
+    scanBtn.addEventListener('click', async () => {
         const username = usernameInput.value.trim().replace('@', '');
         
         if (!username) {
-            showStatus('⚠', 'Please enter a username!', 'warning');
+            showError('Please enter a TikTok username!');
             return;
         }
 
+        // Reset states
+        resetUI();
+        currentUsername = username;
+        
         // Show loading
-        profileCard.classList.remove('visible');
-        reportBtn.disabled = true;
         loadingBar.classList.add('active');
-        showStatus('🔍', `Scanning @${username}...`, 'scanning');
+        showStatus('🔍', `Fetching @${username} from TikTok servers...`, 'scanning');
+        scanBtn.disabled = true;
+        scanBtn.querySelector('.btn-text').textContent = 'SCANNING...';
 
-        // Simulate API call delay
-        setTimeout(() => {
+        try {
+            // Call backend API
+            const response = await fetch(`${BACKEND_URL}/api/tiktok-profile?username=${encodeURIComponent(username)}`);
+            const data = await response.json();
+            
             loadingBar.classList.remove('active');
-            
-            // Get demo data
-            let data = demoTargets[username.toLowerCase()];
-            if (!data) {
-                data = getDefaultData(username);
-            }
+            scanBtn.disabled = false;
+            scanBtn.querySelector('.btn-text').textContent = 'SCAN';
 
-            // Populate profile card
-            document.getElementById('avatarImg').src = data.avatar;
-            document.getElementById('displayName').textContent = data.displayName;
-            document.getElementById('usernameDisplay').textContent = data.username;
-            document.getElementById('userId').textContent = data.userId;
-            document.getElementById('followers').textContent = data.followers;
-            document.getElementById('following').textContent = data.following;
-            document.getElementById('likes').textContent = data.likes;
-            document.getElementById('videos').textContent = data.videos;
-            document.getElementById('bio').textContent = data.bio;
-
-            // Verified badge
-            const verifiedBadge = document.getElementById('verifiedBadge');
-            if (data.verified) {
-                verifiedBadge.style.display = 'block';
+            if (data.success) {
+                // Populate profile card with REAL data
+                populateProfileCard(data);
+                profileCard.classList.add('visible');
+                reportBtn.disabled = false;
+                hideError();
+                showStatus('✅', `Target @${data.username} located! Ready for action.`, 'success');
             } else {
-                verifiedBadge.style.display = 'none';
+                showError(data.error || `Profile '@${username}' not found on TikTok!`);
+                showStatus('❌', 'Profile not found. Check username and try again.', 'error');
+                profileCard.classList.remove('visible');
+                reportBtn.disabled = true;
             }
-
-            // Show profile card
-            profileCard.classList.add('visible');
-            reportBtn.disabled = false;
+        } catch (error) {
+            loadingBar.classList.remove('active');
+            scanBtn.disabled = false;
+            scanBtn.querySelector('.btn-text').textContent = 'SCAN';
             
-            showStatus('✅', `Target @${data.username} located successfully!`, 'success');
-        }, 2000);
+            console.error('Fetch error:', error);
+            
+            if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+                showError('⚠ Backend server not running!<br><br>Please start backend.py first:<br><code>python backend.py</code>');
+            } else {
+                showError('Connection error: ' + error.message);
+            }
+            
+            showStatus('❌', 'Connection failed. Is the backend running?', 'error');
+            profileCard.classList.remove('visible');
+            reportBtn.disabled = true;
+        }
     });
 
-    // Report button click
+    // ===== POPULATE PROFILE CARD =====
+    function populateProfileCard(data) {
+        // Avatar
+        const avatarImg = document.getElementById('avatarImg');
+        if (data.avatar) {
+            avatarImg.src = data.avatar;
+        } else {
+            avatarImg.src = 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22150%22 height=%22150%22%3E%3Crect fill=%22%23333%22 width=%22150%22 height=%22150%22/%3E%3Ctext fill=%22%2300ff41%22 x=%2275%22 y=%2290%22 text-anchor=%22middle%22 font-size=%2250%22%3E?%3C/text%3E%3C/svg%3E';
+        }
+
+        // Name & Username
+        document.getElementById('displayName').textContent = data.displayName || data.username;
+        document.getElementById('usernameDisplay').textContent = data.username;
+        document.getElementById('userId').textContent = data.userId || '---';
+
+        // Stats with formatting
+        document.getElementById('followers').textContent = formatNumber(data.followers || 0);
+        document.getElementById('following').textContent = formatNumber(data.following || 0);
+        document.getElementById('likes').textContent = formatNumber(data.likes || 0);
+        document.getElementById('videos').textContent = formatNumber(data.videos || 0);
+
+        // Bio
+        document.getElementById('bio').textContent = data.bio || 'No bio available';
+
+        // Verified Badge
+        if (data.verified) {
+            verifiedBadge.classList.add('visible');
+        } else {
+            verifiedBadge.classList.remove('visible');
+        }
+    }
+
+    // ===== REPORT BUTTON CLICK =====
     reportBtn.addEventListener('click', () => {
-        const username = usernameInput.value.trim().replace('@', '');
-        
+        if (!currentUsername) return;
+
         // Disable button during process
         reportBtn.disabled = true;
         reportBtn.querySelector('.report-text').textContent = 'REPORTING...';
+        scanBtn.disabled = true;
         
         // Update status
         showStatus('🔄', 'Initiating report sequence...', 'reporting');
         statusDisplay.classList.add('reporting');
 
-        // Simulate reporting process
-        setTimeout(() => {
-            showStatus('📡', 'Connecting to TikTok servers...', 'reporting');
-        }, 1000);
+        // Simulate reporting steps
+        const steps = [
+            { delay: 800, icon: '📡', text: 'Connecting to TikTok moderation servers...' },
+            { delay: 1600, icon: '🔐', text: 'Establishing secure connection...' },
+            { delay: 2400, icon: '📋', text: `Compiling report data for @${currentUsername}...` },
+            { delay: 3200, icon: '📨', text: 'Submitting violation report...' },
+            { delay: 4000, icon: '⏳', text: 'Awaiting server confirmation...' },
+        ];
 
-        setTimeout(() => {
-            showStatus('🔐', 'Bypassing security protocols...', 'reporting');
-        }, 2000);
+        steps.forEach(step => {
+            setTimeout(() => {
+                showStatus(step.icon, step.text, 'reporting');
+            }, step.delay);
+        });
 
+        // Final success
         setTimeout(() => {
-            showStatus('📋', 'Submitting report data...', 'reporting');
-        }, 3000);
-
-        setTimeout(() => {
-            showStatus('📨', 'Report received. Processing...', 'reporting');
-        }, 4000);
-
-        setTimeout(() => {
-            // Success!
             statusDisplay.classList.remove('reporting');
             statusDisplay.classList.add('success');
-            showStatus('✅', `SUCCESS! @${username} has been reported successfully!`, 'final-success');
+            showStatus('✅', `SUCCESS! @${currentUsername} has been reported successfully!`, 'final-success');
             
             reportBtn.querySelector('.report-text').textContent = 'SUCCESS ✅';
-            reportBtn.style.background = '#00ff41';
-            reportBtn.style.color = '#000';
-            reportBtn.style.boxShadow = '0 0 30px rgba(0, 255, 65, 0.7)';
+            reportBtn.classList.add('success-state');
             
             // Reset after 5 seconds
             setTimeout(() => {
-                reportBtn.querySelector('.report-text').textContent = 'REPORT PROFILE';
-                reportBtn.style.background = '#ff0040';
-                reportBtn.style.color = '#fff';
-                reportBtn.style.boxShadow = '0 0 20px rgba(255, 0, 64, 0.5)';
+                resetReportButton();
                 statusDisplay.classList.remove('success');
                 showStatus('⏳', 'Ready for next operation...', 'idle');
             }, 5000);
         }, 5000);
     });
 
-    // Enter key support
+    // ===== RESET REPORT BUTTON =====
+    function resetReportButton() {
+        reportBtn.querySelector('.report-text').textContent = 'REPORT PROFILE';
+        reportBtn.classList.remove('success-state');
+        reportBtn.disabled = false;
+        scanBtn.disabled = false;
+    }
+
+    // ===== RESET UI =====
+    function resetUI() {
+        profileCard.classList.remove('visible');
+        reportBtn.disabled = true;
+        resetReportButton();
+        hideError();
+        statusDisplay.classList.remove('reporting', 'success', 'error');
+        verifiedBadge.classList.remove('visible');
+    }
+
+    // ===== ENTER KEY SUPPORT =====
     usernameInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
             scanBtn.click();
         }
     });
 
-    // Status helper function
+    // ===== STATUS HELPER =====
     function showStatus(icon, text, type) {
         statusIcon.textContent = icon;
         statusText.textContent = text;
         
-        // Reset classes
-        statusDisplay.classList.remove('reporting', 'success');
+        statusDisplay.classList.remove('reporting', 'success', 'error');
+        if (type === 'error') statusDisplay.classList.add('error');
+    }
+
+    // ===== ERROR HELPER =====
+    function showError(message) {
+        errorMessage.innerHTML = message;
+        errorMessage.classList.add('visible');
+    }
+
+    function hideError() {
+        errorMessage.classList.remove('visible');
+        errorMessage.innerHTML = '';
+    }
+
+    // ===== NUMBER FORMATTER =====
+    function formatNumber(num) {
+        if (!num) return '0';
+        if (num >= 1000000000) {
+            return (num / 1000000000).toFixed(1) + 'B';
+        } else if (num >= 1000000) {
+            return (num / 1000000).toFixed(1) + 'M';
+        } else if (num >= 1000) {
+            return (num / 1000).toFixed(1) + 'K';
+        }
+        return num.toString();
     }
 });
