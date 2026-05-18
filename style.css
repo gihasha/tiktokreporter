@@ -218,6 +218,24 @@ body {
     font-size: 1.2rem;
 }
 
+/* ===== ERROR MESSAGE ===== */
+.error-message {
+    background: rgba(255, 0, 64, 0.1);
+    border: 1px solid #ff0040;
+    color: #ff0040;
+    padding: 12px;
+    border-radius: 5px;
+    margin-bottom: 15px;
+    display: none;
+    font-size: 0.85rem;
+    text-align: center;
+}
+
+.error-message.visible {
+    display: block;
+    animation: fadeIn 0.3s;
+}
+
 /* ===== LOADING BAR ===== */
 .loading-bar {
     height: 3px;
@@ -230,7 +248,7 @@ body {
 }
 
 .loading-bar.active {
-    animation: loadingAnimation 2s ease-in-out;
+    animation: loadingAnimation 2s ease-in-out infinite;
 }
 
 @keyframes loadingAnimation {
@@ -274,6 +292,7 @@ body {
     overflow: hidden;
     position: relative;
     box-shadow: 0 0 15px rgba(0, 255, 65, 0.3);
+    flex-shrink: 0;
 }
 
 .avatar-img {
@@ -298,6 +317,7 @@ body {
     color: #fff;
     font-size: 1.2rem;
     margin-bottom: 3px;
+    word-break: break-word;
 }
 
 .username-display {
@@ -362,6 +382,10 @@ body {
     display: none;
 }
 
+.verified-badge.visible {
+    display: block;
+}
+
 /* ===== REPORT BUTTON ===== */
 .report-btn {
     width: 100%;
@@ -403,6 +427,12 @@ body {
     box-shadow: 0 0 10px rgba(255, 0, 64, 0.5);
 }
 
+.report-btn.success-state {
+    background: #00ff41 !important;
+    color: #000 !important;
+    box-shadow: 0 0 30px rgba(0, 255, 65, 0.7) !important;
+}
+
 /* ===== STATUS DISPLAY ===== */
 .status-display {
     background: rgba(0, 0, 0, 0.8);
@@ -432,6 +462,10 @@ body {
 .status-display.success {
     border-color: #00ff41;
     box-shadow: 0 0 20px rgba(0, 255, 65, 0.5);
+}
+
+.status-display.error {
+    border-color: #ff0040;
 }
 
 @keyframes borderPulse {
@@ -467,6 +501,7 @@ body {
 @media (max-width: 600px) {
     .main-container {
         padding: 15px;
+        padding-bottom: 50px;
     }
     
     .glitch {
@@ -486,4 +521,9 @@ body {
         grid-template-columns: 1fr 1fr;
         gap: 5px;
     }
-      }
+    
+    .profile-header {
+        flex-direction: column;
+        text-align: center;
+    }
+    }
